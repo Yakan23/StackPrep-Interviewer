@@ -10,12 +10,10 @@ const page = async () => {
             Interview Generation Process  
         </h3> 
         <Agent
-            userName={user?.name~}
+            userName={user?.name!}
             userId={user?.id}
             type="generate"
-          
         />
-
     </>
   )
 }
