@@ -2,7 +2,7 @@
 
 import { authFormSchema } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Form} from './ui/form'
@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from "firebase/auth"
 import { auth } from '@/firebase/client'
 import { signIn, signUp } from '@/lib/actions/auth.actions'
+import {Loader2} from "lucide-react"
 
 
 
@@ -23,7 +24,7 @@ import { signIn, signUp } from '@/lib/actions/auth.actions'
 
 
 const AuthForm = ({ type }: {type:FormType}) => {
-    
+    const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
     const formSchema = authFormSchema(type)
     const form = useForm<z.infer<typeof formSchema>>({
@@ -38,7 +39,8 @@ const AuthForm = ({ type }: {type:FormType}) => {
         }
     })
 
-    async function onSubmit(values: z.infer<typeof formSchema>)  {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsLoading(true)
         try {
             if (type === "sign-in") {
                 const { email, password } = values
@@ -77,6 +79,7 @@ const AuthForm = ({ type }: {type:FormType}) => {
             console.log(error)
             toast.error(`There was an error:${error}`)
         }
+        setIsLoading(false)
     }
     
     return (
@@ -137,8 +140,14 @@ const AuthForm = ({ type }: {type:FormType}) => {
                         placeHolder='Upload your resume (.pdf)'
                         inputType='file'
                     /> */}
-                    <Button className="btn" type="submit">
-                            {type === "sign-in"? "Sign In" :"Create An Account"}
+                    <Button className="btn" type="submit" disabled={isLoading}>
+                        {isLoading ? (
+                            <>
+                                <Loader2 size={20} className="animate-spin" /> &nbsp; Loading...
+                            </>
+                        ) : 
+                            type==="sign-in" ? "Sign In" : "Create an account"
+                        }
                     </Button>
                 </form>
             </Form>
