@@ -1,7 +1,7 @@
 import InterviewCard from '@/components/InterviewCard'
 import { Button } from '@/components/ui/button'
-import { dummyInterviews } from '@/constants'
-import { getCurrentUser, getInterviewByUserId, getLatestInterviews } from '@/lib/actions/auth.actions'
+import { getCurrentUser } from '@/lib/actions/auth.actions'
+import { getInterviewByUserId, getLatestInterviews} from "@/lib/actions/general.actions"
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'

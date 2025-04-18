@@ -3,26 +3,46 @@ import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import { CallStatus, SavedMessage } from '@/constants'
+import { CallStatus, interviewer, SavedMessage } from '@/constants'
 import { vapi } from '@/lib/vapi.sdk'
 
 
-const Agent = ({ userName, userId, type }: AgentProps) => {
+const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) => {
     const router = useRouter()
     const [isSpeaking, setisSpeaking] = useState(false)
-    const [callStatus, setcallStatus] = useState<CallStatus>(CallStatus.INACTIVE)
+    const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE)
     const [messages, setMessages] = useState<SavedMessage[]>([])
+    const isCallInactiveOrFinished = callStatus === CallStatus.INACTIVE || CallStatus.FINISHED;
+    const lastMessage = messages[messages.length - 1]?.content
+    
+    console.log("===AGENT DETAILS===")
+    console.log(userName, type, questions, interviewId)
+
+    const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+
+        console.log("Generate Feedback Here.")
+        const { success, id } = {
+            success: true,
+            id:"feedback-id"
+        }  
+        if (success && id) {
+            router.push(`/interview/${interviewId}/feedback`)
+        }else {
+            console.log("Error saving feedback")
+            router.push("/")
+        }
+    }
 
     useEffect(() => {
-        const onCallStart = () => setcallStatus(CallStatus.ACTIVE)
-        const onCallEnd = () => setcallStatus(CallStatus.FINISHED)
+        const onCallStart = () => setCallStatus(CallStatus.ACTIVE)
+        const onCallEnd = () => setCallStatus(CallStatus.FINISHED)
         const onMessage = (message: Message) => {
             if (message.type === "transcript" && message.transcriptType === "final") {
                 const newMessage = {
                     role: message.role,
                     content: message.transcript
                 }
-                setMessages((prev)=>[...prev, newMessage])
+                setMessages((prev) => [...prev, newMessage])
             }
         }
         const onSpeechStart = () => setisSpeaking(true)
@@ -48,26 +68,48 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
     }, [])
     
     useEffect(() => {
-        if(callStatus === CallStatus.FINISHED) router.push('/')
-    },[messages,callStatus,type,userId])
+        if (callStatus === CallStatus.FINISHED) {
+            if (type === "generate") {
+                router.push('/')
+            } else {
+                handleGenerateFeedback(messages)
+            }
+        }
+    },[messages, callStatus , interviewId, router, type, userId]);
+    
 
 
     const handleCall = async () => {
-        setcallStatus(CallStatus.CONNECTING)
-        await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-            variableValues: {
-                username: userName,
-                userid: userId,
+        setCallStatus(CallStatus.CONNECTING);
+
+        if (type === "generate") {
+            await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+                variableValues: {
+                    username: userName,
+                    userid: userId,
+                },
+        });
+        } else {
+            let formattedQuestions = "";
+            if (questions) {
+                formattedQuestions = questions
+                .map((question) => `- ${question}`)
+                .join("\n");
             }
-        })
-    }
+
+            await vapi.start(interviewer, {
+                variableValues: {
+                questions: formattedQuestions,
+                },
+            });
+        }
+    };
+
     const handleDisconnect = async () => {
-        setcallStatus(CallStatus.FINISHED)
+        setCallStatus(CallStatus.FINISHED)
         vapi.stop()
     
     }
-    const isCallInactiveOrFinished = callStatus === CallStatus.INACTIVE || CallStatus.FINISHED;
-    const lastMessage = messages[messages.length - 1]?.content
     
 
     return (
