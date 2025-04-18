@@ -43,9 +43,9 @@ const Page = async() => {
           </h2>
           <div className='interviews-section'>
               {hasPastInterviews? (
-                  userInterviews?.map((interview)=>(
+                  userInterviews?.map((interview,index)=>(
                     <InterviewCard
-                    key={interview.id}
+                    key={index}
                     {...interview}
                   />
                   ))) :(  
