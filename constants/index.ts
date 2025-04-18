@@ -228,3 +228,18 @@ export const dummyInterviews: Interview[] = [
     createdAt: "2024-03-14T15:30:00Z",
   },
 ];
+
+
+export enum CallStatus{
+
+    INACTIVE = 'INACTIVE',
+    CONNECTING = 'CONNECTING',
+    ACTIVE='ACTIVE',
+    FINISHED="FINISHED"
+}
+
+
+export interface SavedMessage{
+    role: "user" | 'system' | "assistant",
+    content:string
+}
